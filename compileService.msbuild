@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="gitHooks;BatchBuild;AfterBuild">
+	<Import Project="$(MSBuildProjectDirectory)\Solutions.msbuild" />
+	<Target Name="gitHooks" Condition=" '$(WriteLogEntry)'!='false' ">
+	  <Exec Command="git config core.hooksPath .githooks " />
+	  <Exec Command="git config commit.template .githooks\templates\message_template.txt" />
+	  <Exec Command="git config core.safecrlf false" />
+	</Target>
+    <Target Name="BatchBuild">
+        <PropertyGroup>
+          <CoreBin>$(MSBuildProjectDirectory)\..\Bin\Services</CoreBin> 
+		  <CoreBinApplication>$(MSBuildProjectDirectory)\..\Bin\Application</CoreBinApplication>
+          <CoreDeploy>$(MSBuildProjectDirectory)\..\Bin\CoreDeploy</CoreDeploy>
+        </PropertyGroup>
+        <RemoveDir Directories="$(CompanyCoreBin)" />
+        <RemoveDir Directories="$(CoreBin)" />
+        <RemoveDir Directories="$(CoreDeploy)" />
+        <MSBuild Projects="@(Solution)" ContinueOnError="false" StopOnFirstFailure="true" />
+    </Target>
+	<Target Name="AfterBuild">
+	<PropertyGroup>
+		<PowerShellExe Condition=" '$(PowerShellExe)'=='' ">%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe</PowerShellExe>
+		<ScriptLocation Condition=" '$(ScriptLocation)'=='' ">$(MSBuildProjectDirectory)\..\.gitHooks\build\after-build.ps1</ScriptLocation>
+	</PropertyGroup>
+		<Exec Command="$(PowerShellExe) -NonInteractive -executionpolicy Unrestricted -command &quot;&amp; invoke-command -scriptblock { $(ScriptLocation) } &quot;"/>  
+    </Target>
+</Project>
